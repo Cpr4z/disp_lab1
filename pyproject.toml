@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "disp-lab1"
+version = "0.1.0"
+description = ""
+authors = ["cpr4z <matvey.agarkov02@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+asgiref = "3.8.1"
+django = "5.1.3"
+djangorestframework = "3.15.2"
+sqlparse = "0.5.1"
+typing-extensions = "4.12.2"
+psycopg2 = "2.9.9"
+psycopg2-binary = "2.9.9"
+requests = "^2.32.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+

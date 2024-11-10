@@ -1,21 +1,118 @@
 name: GitHub Classroom Workflow
+
 on:
   push:
     branches:
       - master
+      - develop
   pull_request:
     branches:
       - master
+      - develop
+
 jobs:
   build:
-    name: Autograding
+    name: Dependencies
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_DB: persons
+          POSTGRES_USER: program
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      # Шаг 1: Клонируем репозиторий
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # Шаг 2: Установка Python и зависимостей для подготовки пакета
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m venv venv
+          . venv/bin/activate
+          pip install -r requirements.txt
+
+      # Шаг 3: Устанавливаем SSH-ключ для доступа к серверу
+      - name: Install SSH Key
+        run: |
+          install -m 600 -D /dev/null ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
+
+      # Шаг 4: Создание пакета для деплоя
+      - name: Create deployment package
+        run: |
+          mkdir deploy_package
+          cp -r djangoProject Dockerfile docker-compose.yml djangoProject/requirements.txt deploy_package/
+          tar -czf project.tar.gz -C deploy_package .
+          rm -rf deploy_package
+
+      # Шаг 5: Копирование пакета на сервер
+      - name: Copy package to server
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          scp -P $SSH_PORT project.tar.gz $SSH_USER@$SSH_HOST:/home/$SSH_USER/project.tar.gz
+
+      # Шаг 6: Деплой на сервере и запуск миграций и тестов
+      - name: Deploy on server
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST << EOF
+            # Перемещаемся в домашний каталог и распаковываем проект
+            cd /home/$SSH_USER
+            mkdir -p my_project
+            tar -xzf project.tar.gz -C my_project
+            cd my_project
+            
+            # Запускаем контейнеры в фоновом режиме
+            docker-compose down
+            docker-compose up --build -d
+
+            # Ждём запуска контейнеров и проверяем статус базы данных
+            echo "Waiting for containers to be ready..."
+            sleep 10  # Задержка для инициализации
+          
+            docker-compose exec -T web python src/app/manage.py makemigrations
+            
+            # Запускаем миграции внутри контейнера Django
+            docker-compose exec -T web python src/app/manage.py migrate
+
+            # Запускаем тесты внутри контейнера Django
+            docker-compose exec -T web python src/app/manage.py test
+          EOF
+
+      # Шаг 7: Чистка временных файлов
+      - name: Clean up
+        run: rm -rf ~/.ssh project.tar.gz
+
+  Autograding:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
-      # TODO build, test and deploy project
 
       - name: Run API Tests
         uses: matt-ball/newman-action@master
@@ -28,13 +125,3 @@ jobs:
       - name: Autograding
         uses: education/autograding@v1
         continue-on-error: true
-
-      - name: Github auto grader mark
-        uses: Romanow/google-sheet-autograder-marker@v1.0
-        with:
-          google_token: ${{secrets.GOOGLE_API_KEY}}
-          sheet_id: "1xkgjUX6Qmk7rdJG-QPOToav-HWWtthJjnShIKnw3oIY"
-          homework_number: 1
-          user_column: 'D'
-          column_offset: 'F'
-          mark: "'+"

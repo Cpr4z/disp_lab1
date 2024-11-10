@@ -14,5 +14,23 @@ services:
     ports:
       - "5432:5432"
 
+  web:
+    build: .
+    container_name: django_app
+    command: python src/app/manage.py runserver 0.0.0.0:8080
+    volumes:
+      - .:/app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    environment:
+      DEBUG: "1"
+      DJANGO_DB_HOST: postgres
+      DJANGO_DB_PORT: 5432
+      DJANGO_DB_NAME: ${POSTGRES_DB:-persons}
+      DJANGO_DB_USER: ${POSTGRES_USER:-program}
+      DJANGO_DB_PASSWORD: ${POSTGRES_PASSWORD:-test}
+
 volumes:
   db-data:
