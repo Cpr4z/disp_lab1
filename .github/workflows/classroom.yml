@@ -93,10 +93,10 @@ jobs:
             echo "Waiting for containers to be ready..."
             sleep 10  # Задержка для инициализации
           
-            docker-compose exec -T web python src/app/manage.py makemigrations
+            docker-compose exec -T web python src/app/manage.py makemigrations web_app
             
             # Запускаем миграции внутри контейнера Django
-            docker-compose exec -T web python src/app/manage.py migrate
+            docker-compose exec -T web python src/app/manage.py migrate web_app
 
             # Запускаем тесты внутри контейнера Django
             docker-compose exec -T web python src/app/manage.py test
