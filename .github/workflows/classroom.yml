@@ -58,7 +58,7 @@ jobs:
       - name: Create deployment package
         run: |
           mkdir deploy_package
-          cp -r djangoProject Dockerfile docker-compose.yml djangoProject/requirements.txt deploy_package/
+          cp -r src Dockerfile docker-compose.yml requirements.txt deploy_package/
           tar -czf project.tar.gz -C deploy_package .
           rm -rf deploy_package
 
