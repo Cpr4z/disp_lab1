@@ -30,7 +30,7 @@ SECRET_KEY = 'django-insecure-szu$cp^=p8f25gkj63tivtr830$^mm$qk$3%t@_j1yi7cs3+=n
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['0.0.0.0', 'localhost', '127.0.0.1', '51.250.34.213']
+ALLOWED_HOSTS = ['0.0.0.0', 'localhost', '127.0.0.1', '130.193.59.33']
 
 
 # Application definition
@@ -86,7 +86,7 @@ DATABASES = {
         'NAME': os.environ.get('DJANGO_DB_NAME', 'persons'),
         'USER': os.environ.get('DJANGO_DB_USER', 'program'),
         'PASSWORD': os.environ.get('DJANGO_DB_PASSWORD', 'test'),
-        'HOST': os.environ.get('DJANGO_DB_HOST', '51.250.34.213'),
+        'HOST': os.environ.get('DJANGO_DB_HOST', '130.193.59.33'),
         'PORT': os.environ.get('DJANGO_DB_PORT', '5432'),
     }
 }

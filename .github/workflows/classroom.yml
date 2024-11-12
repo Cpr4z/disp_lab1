@@ -91,7 +91,7 @@ jobs:
 
             # Ждём запуска контейнеров и проверяем статус базы данных
             echo "Waiting for containers to be ready..."
-            sleep 10  # Задержка для инициализации
+            sleep 20  # Задержка для инициализации
           
             docker-compose exec -T web python src/app/manage.py makemigrations web_app
             
