@@ -107,8 +107,6 @@ jobs:
         run: |
           ssh -p $SSH_PORT $SSH_USER@$SSH_HOST << EOF
           cd /home/$SSH_USER/my_project
-          
-          docker-compose exec -T web pip install pytest pytest-django
       
           # Запускаем тесты внутри контейнера Django
           docker-compose exec -T web pytest src/app/web_app/test_person.py
