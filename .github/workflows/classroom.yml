@@ -109,7 +109,7 @@ jobs:
           cd /home/$SSH_USER/my_project
       
           # Запускаем тесты внутри контейнера Django
-          pytest -vs src/app/web_app/test.py
+          docker-compose exec -T web python src/app/manage.py test
           EOF
 
       # Шаг 7: Чистка временных файлов
