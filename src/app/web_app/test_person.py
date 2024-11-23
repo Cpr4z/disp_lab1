@@ -7,7 +7,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "person_service.settings")
 django.setup()
 
 from django.test.client import RequestFactory
-from web_app.views import persons_api
+from .views import persons_api
 
 
 @pytest.mark.django_db
