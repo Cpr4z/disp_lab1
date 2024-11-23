@@ -3,8 +3,12 @@ import json
 import django
 import pytest
 
-# os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
-# django.setup()
+# Добавляем корневую папку в PYTHONPATH
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Устанавливаем переменную окружения для настроек Django
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "app.project.settings")
+django.setup()
 
 from django.test.client import RequestFactory
 from web_app.views import persons_api
