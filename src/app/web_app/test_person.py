@@ -7,7 +7,7 @@ import pytest
 # django.setup()
 
 from django.test.client import RequestFactory
-from .views import persons_api
+from web_app.views import persons_api
 
 
 @pytest.mark.django_db
