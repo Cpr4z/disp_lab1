@@ -98,6 +98,13 @@ jobs:
             # Запускаем миграции внутри контейнера Django
             docker-compose exec -T web python src/app/manage.py migrate web_app
           EOF
+        
+      - name: Check Docker containers
+        run: |
+          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST << EOF
+          cd /home/$SSH_USER/my_project
+          docker-compose ps
+          EOF
 
       - name: Run tests
         env:
@@ -109,7 +116,7 @@ jobs:
           cd /home/$SSH_USER/my_project
       
           # Запускаем тесты внутри контейнера Django
-          docker-compose exec -T web python src/app/manage.py test
+          docker-compose exec -T web python src/app/manage.py test --verbosity=2
           EOF
 
       # Шаг 7: Чистка временных файлов
