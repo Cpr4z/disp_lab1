@@ -3,7 +3,7 @@ import json
 import django
 import pytest
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "app.project.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
 django.setup()
 
 from django.test.client import RequestFactory
