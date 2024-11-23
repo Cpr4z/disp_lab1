@@ -1,6 +1,6 @@
 import requests
 
-BASE_URL = 'http://51.250.34.213:8080/api/v1/persons/'
+BASE_URL = 'http://51.250.46.215:8080/api/v1/persons/'
 
 def get_persons(person_id = -1):
     msg = ''
