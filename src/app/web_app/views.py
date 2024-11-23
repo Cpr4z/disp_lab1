@@ -8,7 +8,7 @@ from .serializers import PersonSerializer
 
 
 @csrf_exempt
-def web_app(request, id=None):
+def persons_api(request, id=None):
     if request.method == 'GET':
         if id:
             try:

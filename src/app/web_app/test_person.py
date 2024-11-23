@@ -7,14 +7,14 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "person_service.settings")
 django.setup()
 
 from django.test.client import RequestFactory
-from views import web_app
+from web_app.views import persons_api
 
 
 @pytest.mark.django_db
 def test_get_all_persons():
     fact = RequestFactory()
     request = fact.get('api/v1/persons/')
-    response = web_app(request)
+    response = persons_api(request)
     assert response.status_code == 200
 
 
@@ -26,22 +26,22 @@ def test_get_existing_person_by_id():
                  'address': 'address1',
                  'work': 'work1'}
     request = fact.post('/api/v1/persons/', data=pers_data, content_type='application/json')
-    response = web_app(request)
+    response = persons_api(request)
     location = response.headers['Location']
     pers_id = int(location[location.rfind('/') + 1:])
     request = fact.get('api/v1/persons/')
-    response = web_app(request, pers_id)
+    response = persons_api(request, pers_id)
     assert response.status_code == 200
 
     request = fact.delete('/api/v1/persons/')
-    web_app(request, pers_id)
+    persons_api(request, pers_id)
 
 
 @pytest.mark.django_db
 def test_get_not_existing_person_by_id():
     fact = RequestFactory()
     request = fact.get('api/v1/persons/')
-    response = web_app(request, -1)
+    response = persons_api(request, -1)
     assert response.status_code == 404
 
 
@@ -53,13 +53,13 @@ def test_post_person_positive():
                  'address': 'address1',
                  'work': 'work1'}
     request = fact.post('/api/v1/persons/', data=pers_data, content_type='application/json')
-    response = web_app(request)
+    response = persons_api(request)
     assert response.status_code == 201
 
     location = response.headers['Location']
     pers_id = int(location[location.rfind('/') + 1:])
     request = fact.delete('api/v1/persons/', pers_id)
-    web_app(request, pers_id)
+    persons_api(request, pers_id)
 
 
 @pytest.mark.django_db
@@ -67,7 +67,7 @@ def test_post_person_invalid_data():
     fact = RequestFactory()
     pers_data = {'first_name': 'pers1'}
     request = fact.post('/api/v1/persons/', data=pers_data, content_type='application/json')
-    response = web_app(request)
+    response = persons_api(request)
     assert response.status_code == 400
 
 
@@ -79,12 +79,12 @@ def delete_existing_person():
                  'address': 'address1',
                  'work': 'work1'}
     request = fact.post('/api/v1/persons/', data=pers_data, content_type='application/json')
-    response = web_app(request)
+    response = persons_api(request)
 
     location = response.headers['Location']
     pers_id = int(location[location.rfind('/') + 1:])
     request = fact.delete('/api/v1/persons/')
-    response = web_app(request, pers_id)
+    response = persons_api(request, pers_id)
     assert response.status_code == 204
 
 
@@ -92,5 +92,5 @@ def delete_existing_person():
 def delete_not_existing_person():
     fact = RequestFactory()
     request = fact.delete('/api/v1/persons/')
-    response = web_app(request, -1)
+    response = persons_api(request, -1)
     assert response.status_code == 204
