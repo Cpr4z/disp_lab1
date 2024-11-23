@@ -94,3 +94,7 @@ def delete_not_existing_person():
     request = fact.delete('/api/v1/persons/')
     response = persons_api(request, -1)
     assert response.status_code == 204
+
+if __name__ == "__main__":
+    import unittest
+    unittest.main()
