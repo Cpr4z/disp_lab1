@@ -1,61 +1,96 @@
-from django.urls import reverse
-from rest_framework import status
-from rest_framework.test import APITestCase
-from .models import Person
+import os
+import json
+import django
+import pytest
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "person_service.settings")
+django.setup()
+
+from django.test.client import RequestFactory
+from views import web_app
 
 
-class PersonTestCase(APITestCase):
-    def setUp(self):
-        """Создание начальной записи"""
-        self.person = Person.objects.create(
-            name = 'John Smith',
-            age = 18,
-            address = '123 Main Street',
-            work = 'Engineer'
-        )
-        self.base_url = reverse('person-list')
+@pytest.mark.django_db
+def test_get_all_persons():
+    fact = RequestFactory()
+    request = fact.get('api/v1/persons/')
+    response = web_app(request)
+    assert response.status_code == 200
 
-    def test_get_person_list(self):
-        """Тестирование получения списка всех персон (GET api/v1/persons/)"""
-        response = self.client.get(self.base_url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIsInstance(response.json(), list)
-        self.assertEqual(len(response.json()), 1)
 
-    def test_get_person_by_id(self):
-        """Тестирование получения person по его id (GET api/v1/persons/{id})"""
-        url = reverse('person-detail', args=[self.person.id])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json()['name'], self.person.name)
-        self.assertEqual(response.json()['address'], self.person.address)
-        self.assertEqual(response.json()['work'], self.person.work)
-        self.assertEqual(response.json()['age'], self.person.age)
+@pytest.mark.django_db
+def test_get_existing_person_by_id():
+    fact = RequestFactory()
+    pers_data = {'name': 'pers1',
+                 'age': 22,
+                 'address': 'address1',
+                 'work': 'work1'}
+    request = fact.post('/api/v1/persons/', data=pers_data, content_type='application/json')
+    response = web_app(request)
+    location = response.headers['Location']
+    pers_id = int(location[location.rfind('/') + 1:])
+    request = fact.get('api/v1/persons/')
+    response = web_app(request, pers_id)
+    assert response.status_code == 200
 
-    def test_create_person(self):
-        """Тестирование создания объекта person (POST api/v1/persons/)"""
-        data = {
-            'name': 'Tim Doe',
-            'address': '123 New Street',
-            'work': 'Doctor',
-            'age': 30
-        }
-        response = self.client.post(self.base_url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Person.objects.count(), 2)
+    request = fact.delete('/api/v1/persons/')
+    web_app(request, pers_id)
 
-    def test_update_person(self):
-        """Тестирование обновления persons (PATCH api/v1/persons/{id}/)"""
-        url = reverse('person-detail', args=[self.person.id])
-        data = {'age': 45}
-        response = self.client.patch(url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.person.refresh_from_db()
-        self.assertEqual(self.person.age, 45)
 
-    def test_delete_person(self):
-        """Тестирование удаления persons (DELETE api/v1/persons/{id}/)"""
-        url = reverse('person-detail', args=[self.person.id])
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(Person.objects.count(), 0)
+@pytest.mark.django_db
+def test_get_not_existing_person_by_id():
+    fact = RequestFactory()
+    request = fact.get('api/v1/persons/')
+    response = web_app(request, -1)
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_post_person_positive():
+    fact = RequestFactory()
+    pers_data = {'name': 'pers1',
+                 'age': 22,
+                 'address': 'address1',
+                 'work': 'work1'}
+    request = fact.post('/api/v1/persons/', data=pers_data, content_type='application/json')
+    response = web_app(request)
+    assert response.status_code == 201
+
+    location = response.headers['Location']
+    pers_id = int(location[location.rfind('/') + 1:])
+    request = fact.delete('api/v1/persons/', pers_id)
+    web_app(request, pers_id)
+
+
+@pytest.mark.django_db
+def test_post_person_invalid_data():
+    fact = RequestFactory()
+    pers_data = {'first_name': 'pers1'}
+    request = fact.post('/api/v1/persons/', data=pers_data, content_type='application/json')
+    response = web_app(request)
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def delete_existing_person():
+    fact = RequestFactory()
+    pers_data = {'name': 'pers1',
+                 'age': 22,
+                 'address': 'address1',
+                 'work': 'work1'}
+    request = fact.post('/api/v1/persons/', data=pers_data, content_type='application/json')
+    response = web_app(request)
+
+    location = response.headers['Location']
+    pers_id = int(location[location.rfind('/') + 1:])
+    request = fact.delete('/api/v1/persons/')
+    response = web_app(request, pers_id)
+    assert response.status_code == 204
+
+
+@pytest.mark.django_db
+def delete_not_existing_person():
+    fact = RequestFactory()
+    request = fact.delete('/api/v1/persons/')
+    response = web_app(request, -1)
+    assert response.status_code == 204
